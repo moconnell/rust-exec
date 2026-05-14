@@ -2,7 +2,6 @@ use std::clone;
 
 #[derive(clone::Clone)]
 pub struct Config {
-    pub hl_base_url: String,
     pub wallet_address: String,
     pub private_key: Option<String>,
 
@@ -19,7 +18,6 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        let hl_base_url = std::env::var("HL_BASE_URL")?;
         let wallet_address = std::env::var("WALLET_ADDRESS")?;
         let private_key = std::env::var("PRIVATE_KEY").ok();
 
@@ -45,7 +43,6 @@ impl Config {
         let log_level = std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string());
 
         Ok(Self {
-            hl_base_url,
             wallet_address,
             private_key,
             symbols,

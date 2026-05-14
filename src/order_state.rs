@@ -178,7 +178,6 @@ mod tests {
 
     fn config(symbols: Vec<&str>) -> Config {
         Config {
-            hl_base_url: "testnet".to_string(),
             wallet_address: "0000000000000000000000000000000000000000".to_string(),
             private_key: None,
             symbols: symbols.into_iter().map(str::to_string).collect(),
