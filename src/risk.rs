@@ -19,6 +19,7 @@ pub fn validate_order(
     Ok(())
 }
 
+#[derive(Debug)]
 pub enum RiskReject {
     OrderTooLarge,
     StaleMarketData,

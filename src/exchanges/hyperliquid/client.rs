@@ -12,7 +12,7 @@ use crate::{
     wallet::WalletHolding,
 };
 
-use super::market_data;
+use super::{balances, market_data, orders};
 
 pub struct HyperliquidClient {
     base_url: BaseUrl,
@@ -65,30 +65,10 @@ impl ExchangeClient for HyperliquidClient {
     }
 
     async fn get_wallet_holdings(&self) -> anyhow::Result<Vec<WalletHolding>> {
-        let address = self.wallet_address;
-        let user_state = self.info_client.user_state(address).await?;
-
-        Ok(user_state
-            .asset_positions
-            .into_iter()
-            .map(|asset_position| {
-                let position = asset_position.position;
-
-                WalletHolding {
-                    coin: position.coin,
-                    total: position.szi,
-                    entry_px: position.entry_px,
-                    leverage: Some(position.leverage.value.to_string()),
-                    unrealized_pnl: Some(position.unrealized_pnl),
-                    realised_pnl: None,
-                    funding_unlocked: Some(position.cum_funding.since_open),
-                    collateral: Some(position.margin_used),
-                }
-            })
-            .collect())
+        balances::get_wallet_holdings(&self.info_client, self.wallet_address).await
     }
 
     async fn place_order(&self, order: Order) -> anyhow::Result<Order> {
-        Ok(order)
+        orders::place_order(self.exchange_client.as_ref(), order).await
     }
 }
