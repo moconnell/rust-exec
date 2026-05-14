@@ -5,6 +5,7 @@ use tokio::{
     sync::{mpsc::unbounded_channel, watch::Sender},
     time::Instant,
 };
+use tracing::{debug, info};
 
 use crate::market_data::{MarketSnapshot, MarketState};
 
@@ -43,10 +44,20 @@ pub async fn subscribe(
     symbols: Vec<String>,
     market_tx: Sender<MarketState>,
 ) -> anyhow::Result<()> {
+    info!(
+        symbol_count = symbols.len(),
+        "opening hyperliquid market data stream"
+    );
+
     let mut info_client = InfoClient::new(None, Some(base_url)).await?;
     let (sender, mut receiver) = unbounded_channel();
 
     for symbol in symbols {
+        info!(
+            symbol = %symbol,
+            "subscribing to hyperliquid l2 book"
+        );
+
         info_client
             .subscribe(Subscription::L2Book { coin: symbol }, sender.clone())
             .await?;
@@ -63,10 +74,18 @@ pub async fn subscribe(
 
         market_state.update(snapshot_from_l2_data(&l2_book.data)?);
 
+        debug!(
+            symbol = %l2_book.data.coin,
+            "received hyperliquid l2 book update"
+        );
+
         if market_tx.send(market_state.clone()).is_err() {
+            info!("market data receiver dropped");
             break;
         }
     }
+
+    info!("hyperliquid market data stream closed");
 
     Ok(())
 }

@@ -5,3 +5,4 @@ pub mod market_data;
 pub mod order_state;
 pub mod risk;
 pub mod wallet;
+pub mod weights;

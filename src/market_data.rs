@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use tokio::{sync::watch::Sender, time::Instant};
+use tracing::{error, info};
 
 use crate::{config::Config, exchanges::ExchangeClient};
 
@@ -40,10 +41,18 @@ pub async fn run<E>(config: Arc<Config>, exchange: Arc<E>, market_tx: Sender<Mar
 where
     E: ExchangeClient + ?Sized,
 {
+    info!(
+        symbols = ?config.symbols,
+        "starting market data subscription"
+    );
+
     if let Err(err) = exchange
         .subscribe_market_data(config.symbols.clone(), market_tx)
         .await
     {
-        eprintln!("market data stream stopped: {err:?}");
+        error!(
+            error = ?err,
+            "market data stream stopped"
+        );
     }
 }

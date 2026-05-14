@@ -9,7 +9,6 @@ use tokio::{sync::watch, time::timeout};
 
 fn test_config(symbols: Vec<String>) -> Arc<Config> {
     Arc::new(Config {
-        hl_base_url: "testnet".to_string(),
         wallet_address: "0000000000000000000000000000000000000000".to_string(),
         private_key: None,
         symbols,
