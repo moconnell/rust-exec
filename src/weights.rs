@@ -11,16 +11,17 @@ pub async fn get_target_weights(config: &Config) -> anyhow::Result<SymbolWeights
         anyhow::bail!("SYMBOLS must contain at least one symbol");
     }
 
-    let raw_weights = {
-        let mut rng = rand::thread_rng();
-        config
-            .symbols
-            .iter()
-            .map(|symbol| (symbol.clone(), rng.gen_range(0.0..1.0)))
-            .collect::<Vec<_>>()
-    };
+    // Deduplicate symbols and generate weights in a single pass to ensure
+    // the total matches what will be returned in the HashMap
+    let mut raw_weights = HashMap::new();
+    let mut rng = rand::thread_rng();
+    
+    for symbol in &config.symbols {
+        // If symbol already exists, this will overwrite it, ensuring deduplication
+        raw_weights.insert(symbol.clone(), rng.gen_range(0.0..1.0));
+    }
 
-    let total = raw_weights.iter().map(|(_, weight)| weight).sum::<f64>();
+    let total = raw_weights.values().sum::<f64>();
 
     if total <= 0.0 {
         anyhow::bail!("generated target weights have zero total");

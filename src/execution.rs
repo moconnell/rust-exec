@@ -15,7 +15,10 @@ pub async fn run_loop(
     market_rx: Receiver<MarketState>,
     mut order_rx: mpsc::Receiver<Order>,
 ) -> anyhow::Result<()> {
-    info!("execution loop starting");
+    info!(
+        allow_order = config.allow_order,
+        "execution loop starting"
+    );
 
     while let Some(order) = order_rx.recv().await {
         let side = side_as_str(&order.side);
@@ -44,6 +47,22 @@ pub async fn run_loop(
                 mid = market.mid,
                 reject_reason = ?reject,
                 "order rejected by risk"
+            );
+            continue;
+        }
+
+        // Short-circuit in dry-run mode to avoid spamming error logs
+        if !config.allow_order {
+            info!(
+                symbol = %order.symbol,
+                order_id = order.order_id,
+                side,
+                price = order.price,
+                size = order.size,
+                bid = market.bid,
+                ask = market.ask,
+                mid = market.mid,
+                "dry-run: order validated but not submitted (allow_order=false)"
             );
             continue;
         }
