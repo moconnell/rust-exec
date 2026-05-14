@@ -2,7 +2,8 @@ use std::clone;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use tokio::sync::watch::{Receiver, Sender};
+use tokio::sync::mpsc;
+use tokio::sync::watch::Receiver;
 use tracing::{debug, info, warn};
 
 use crate::{config::Config, market_data::MarketState, weights::SymbolWeights};
@@ -57,24 +58,10 @@ pub enum Side {
     Sell,
 }
 
-#[derive(clone::Clone)]
-pub struct OrderState {
-    // For simplicity, we just track the latest proposed order. In a real implementation, this would likely be a queue or more complex structure.
-    pub proposed_order: Option<Order>,
-}
-
-impl OrderState {
-    pub fn new() -> Self {
-        Self {
-            proposed_order: None,
-        }
-    }
-}
-
 pub async fn run(
     config: Arc<Config>,
     market_rx: Receiver<MarketState>,
-    order_tx: Sender<OrderState>,
+    order_tx: mpsc::Sender<Order>,
 ) {
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(5));
 
@@ -115,17 +102,10 @@ pub async fn run(
                 "publishing proposed order"
             );
 
-            if order_tx
-                .send(OrderState {
-                    proposed_order: Some(order),
-                })
-                .is_err()
-            {
+            if order_tx.send(order).await.is_err() {
                 info!("order receiver dropped; stopping order producer");
                 return;
             }
-
-            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         }
     }
 }

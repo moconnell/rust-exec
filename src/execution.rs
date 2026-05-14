@@ -2,26 +2,22 @@ use crate::{
     config::Config,
     exchanges::ExchangeClient,
     market_data::MarketState,
-    order_state::{OrderState, Side},
+    order_state::{Order, Side},
     risk::validate_order,
 };
 use std::sync::Arc;
-use tokio::sync::watch::Receiver;
+use tokio::sync::{mpsc, watch::Receiver};
 use tracing::{error, info, warn};
 
 pub async fn run_loop(
     config: Arc<Config>,
     exchange: Arc<dyn ExchangeClient>,
     market_rx: Receiver<MarketState>,
-    mut order_rx: Receiver<OrderState>,
+    mut order_rx: mpsc::Receiver<Order>,
 ) -> anyhow::Result<()> {
     info!("execution loop starting");
 
-    while order_rx.changed().await.is_ok() {
-        let Some(order) = order_rx.borrow_and_update().proposed_order.clone() else {
-            continue;
-        };
-
+    while let Some(order) = order_rx.recv().await {
         let side = side_as_str(&order.side);
         let market = market_rx.borrow().get(&order.symbol).cloned();
         let Some(market) = market else {
@@ -89,7 +85,7 @@ pub async fn run_loop(
         }
     }
 
-    info!("order state sender dropped; execution loop stopping");
+    info!("order sender dropped; execution loop stopping");
 
     Ok(())
 }

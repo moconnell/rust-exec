@@ -2,11 +2,11 @@ use hyperliquid_rust_exec_poc::config::Config;
 use hyperliquid_rust_exec_poc::exchanges;
 use hyperliquid_rust_exec_poc::execution;
 use hyperliquid_rust_exec_poc::market_data::{self, MarketState};
-use hyperliquid_rust_exec_poc::order_state::{self, OrderState};
+use hyperliquid_rust_exec_poc::order_state;
 
 use std::sync::Arc;
 
-use tokio::sync::watch::channel;
+use tokio::sync::{mpsc, watch};
 
 use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt};
@@ -24,8 +24,8 @@ async fn main() -> anyhow::Result<()> {
     );
 
     let exchange = Arc::new(exchanges::hyperliquid::HyperliquidClient::new(&config).await?);
-    let (market_tx, market_rx) = channel(MarketState::new());
-    let (order_tx, order_rx) = channel(OrderState::new());
+    let (market_tx, market_rx) = watch::channel(MarketState::new());
+    let (order_tx, order_rx) = mpsc::channel(1024);
 
     tokio::spawn(market_data::run(
         Arc::clone(&config),
