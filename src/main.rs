@@ -11,6 +11,10 @@ use tokio::sync::{mpsc, watch};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, fmt};
 
+/// Maximum number of orders that can be queued before the producer is back-pressured.
+/// Sized to hold a full batch of orders (one per symbol) across several intervals.
+const ORDER_CHANNEL_CAPACITY: usize = 1024;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = Arc::new(Config::from_env()?);
@@ -25,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
 
     let exchange = Arc::new(exchanges::hyperliquid::HyperliquidClient::new(&config).await?);
     let (market_tx, market_rx) = watch::channel(MarketState::new());
-    let (order_tx, order_rx) = mpsc::channel(1024);
+    let (order_tx, order_rx) = mpsc::channel(ORDER_CHANNEL_CAPACITY);
 
     tokio::spawn(market_data::run(
         Arc::clone(&config),
