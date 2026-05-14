@@ -1,6 +1,6 @@
 # rust-exec
 
-A proof-of-concept Rust trade execution later, to explore exchange connectivity and trade workflow with [Hyperliquid](hyperliquid.xyz) using [tokio](https://github.com/tokio-rs/tokio) and [hyperliquid_rust_sdk](https://github.com/hyperliquid-dex/hyperliquid-rust-sdk).
+A proof-of-concept trade execution layer in Rust, exploring exchange connectivity and trade workflow with [Hyperliquid](hyperliquid.xyz) using [tokio](https://github.com/tokio-rs/tokio) and [hyperliquid_rust_sdk](https://github.com/hyperliquid-dex/hyperliquid-rust-sdk).
 
 ## Features
 
