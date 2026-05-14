@@ -1,0 +1,12 @@
+[package]
+name = "hyperliquid-rust-exec-poc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+async-trait = "0.1.89"
+ethers = "2.0.14"
+hyperliquid_rust_sdk = "0.6.0"
+serde = "1.0.228"
+tokio = { version = "1.52.1", features = ["full"] }
